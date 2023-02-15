@@ -39,27 +39,28 @@ class MainActivity : AppCompatActivity() {
                 }
                 metalChannel.send(metalQty)
                 delay(1000)
-                metalQty++
+                if (metalQty < 3 ) metalQty++
             }
         }
 
         binding.naveMetalIv.setOnClickListener {
             val metalNaveJob = CoroutineScope(Dispatchers.Default).launch {
-                val nave = Nave("Metal")
-                //leer channel metal
-
                 metalChannel.receive()
-                metalQty--
+                if (metalQty > 0 ) metalQty--
                 withContext(Dispatchers.Main) {
                     binding.cantMetalTv.text = metalQty.toString()
                     /*while (binding.naveMetalIv.y > 682.0) {
                         delay(500)
                         binding.naveMetalIv.y -= 50
+                    }
+                    binding.cantMetalTv.text = metalQty.toString()
+                    metalChannel.receive()
+                    if (metalQty > 0 ) metalQty--
+                    while (binding.naveMetalIv.y < 822.0) {
+                        delay(500)
+                        binding.naveMetalIv.y += 50
                     }*/
-
-
                     //println(binding.naveMetalIv.y)//822.0
-
                 }
             }
         }
@@ -73,13 +74,13 @@ class MainActivity : AppCompatActivity() {
                 }
                 cristalChannel.send(cristalQty)
                 delay(2000)
-                cristalQty++
+                if (cristalQty < 3 ) cristalQty++
             }
         }
         binding.naeCristalIv.setOnClickListener {
             val naveCristalJob = CoroutineScope(Dispatchers.IO).launch {
                 cristalChannel.receive()
-                cristalQty--
+                if (cristalQty > 0 ) cristalQty--
                 withContext(Dispatchers.Main){
                     binding.cantCristalTv.text = cristalQty.toString()
                 }
@@ -95,13 +96,13 @@ class MainActivity : AppCompatActivity() {
                 }
                 deuterioChannel.send(deuterioQty)
                 delay(3000)
-                deuterioQty++
+                if (deuterioQty < 3 ) deuterioQty++
             }
         }
         binding.naveDeuterioIv.setOnClickListener {
             val naveDeuterioJob = CoroutineScope(Dispatchers.IO).launch {
                 deuterioChannel.receive()
-                deuterioQty--
+                if (deuterioQty > 0 ) deuterioQty--
                 withContext(Dispatchers.Main){
                     binding.cantDeuterioTv.text = deuterioQty.toString()
                 }
