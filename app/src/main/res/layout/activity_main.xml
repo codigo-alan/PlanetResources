@@ -116,4 +116,26 @@
         app:layout_constraintStart_toStartOf="@+id/guideline3"
         app:layout_constraintTop_toTopOf="@+id/guideline"
         app:srcCompat="@drawable/nave" />
+
+    <ImageView
+        android:id="@+id/picoMetalIv"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        app:layout_constraintBottom_toTopOf="@+id/metalIv"
+        app:layout_constraintEnd_toStartOf="@+id/metalIv"
+        app:srcCompat="@drawable/pico" />
+    <ImageView
+        android:id="@+id/picoCristalIv"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        app:layout_constraintBottom_toTopOf="@+id/cristalIv"
+        app:layout_constraintEnd_toStartOf="@+id/cristalIv"
+        app:srcCompat="@drawable/pico" />
+    <ImageView
+        android:id="@+id/picoDeuterioIv"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        app:layout_constraintBottom_toTopOf="@+id/deuterioIv"
+        app:layout_constraintEnd_toStartOf="@+id/deuterioIv"
+        app:srcCompat="@drawable/pico" />
 </androidx.constraintlayout.widget.ConstraintLayout>

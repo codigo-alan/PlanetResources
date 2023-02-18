@@ -2,15 +2,17 @@ package com.example.planetresources.view
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.example.planetresources.R
+import android.util.Log
+import android.view.View
+import android.widget.ImageView
+import androidx.lifecycle.MutableLiveData
 import com.example.planetresources.databinding.ActivityMainBinding
-import com.example.planetresources.models.Mineral
-import com.example.planetresources.models.Nave
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 
 class MainActivity : AppCompatActivity() {
     lateinit var binding: ActivityMainBinding
+    lateinit var jobPicoMetal : Job
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -19,36 +21,55 @@ class MainActivity : AppCompatActivity() {
         //crear channel metal
         val metalChannel = Channel<Int>(3)
         var metalQty = 0
+        val metalQtyLiveData = MutableLiveData<Int>(0)
 
         //crear channel cristal
         val cristalChannel = Channel<Int>(3)
-        var cristalQty = 0
+        val cristalQtyLiveData = MutableLiveData<Int>(0)
 
         //crear channel deuterio
         val deuterioChannel = Channel<Int>(3)
-        var deuterioQty = 0
+        //var deuterioQty = 0
+        val deuterioQtyLiveData = MutableLiveData<Int>(0)
 
         //METAL
-        val metalJob = CoroutineScope(Dispatchers.Default).launch {
-            //val metal = Mineral("Metal", 1000)
-            //utilizar el channel metal para escribir
-            while (true) {
-                //metal.addResource()
-                withContext(Dispatchers.Main) {
-                    binding.cantMetalTv.text = metalQty.toString()//metal.quantity.toString()
+        jobPicoMetal = startNewJob(binding.picoMetalIv)
+
+        metalQtyLiveData.observe(this){
+            if (metalQtyLiveData.value!! >= 3) {
+                jobPicoMetal.cancel()
+                binding.picoMetalIv.visibility = View.GONE
+            }
+            else{
+                if(!jobPicoMetal.isActive) {
+                    binding.picoMetalIv.visibility = View.VISIBLE
+                    jobPicoMetal = startNewJob(binding.picoMetalIv)
                 }
-                metalChannel.send(metalQty)
-                delay(1000)
-                if (metalQty < 3 ) metalQty++
             }
         }
 
-        binding.naveMetalIv.setOnClickListener {
-            val metalNaveJob = CoroutineScope(Dispatchers.Default).launch {
-                metalChannel.receive()
-                if (metalQty > 0 ) metalQty--
+        CoroutineScope(Dispatchers.Default).launch {
+            while (true) {
                 withContext(Dispatchers.Main) {
-                    binding.cantMetalTv.text = metalQty.toString()
+                    binding.cantMetalTv.text = metalQtyLiveData.value!!.toString()
+                }
+                metalChannel.send(metalQtyLiveData.value!!)
+                delay(1000)
+                if (metalQtyLiveData.value!! < 3 ) {
+                    metalQtyLiveData.postValue(metalQtyLiveData.value!! + 1)
+                }
+            }
+        }
+
+
+
+        binding.naveMetalIv.setOnClickListener {
+            CoroutineScope(Dispatchers.Default).launch {
+                metalChannel.receive()
+                if (metalQtyLiveData.value!! > 0 )  metalQtyLiveData.postValue(metalQtyLiveData.value!! - 1)
+                withContext(Dispatchers.Main) {
+                    binding.cantMetalTv.text = metalQtyLiveData.value!!.toString()
+                    rotateNave(binding.naveMetalIv)
                     /*while (binding.naveMetalIv.y > 682.0) {
                         delay(500)
                         binding.naveMetalIv.y -= 50
@@ -67,48 +88,104 @@ class MainActivity : AppCompatActivity() {
 
 
         //CRISTAL
-        val cristalJob = CoroutineScope(Dispatchers.IO).launch {
+        var jobPicoCristal = startNewJob(binding.picoCristalIv)
+        cristalQtyLiveData.observe(this){
+            binding.cantCristalTv.text = cristalQtyLiveData.value!!.toString()
+            if (cristalQtyLiveData.value!! >= 3) {
+                jobPicoCristal.cancel()
+                binding.picoCristalIv.visibility = View.GONE
+            }else{
+                if (!jobPicoCristal.isActive) {
+                    binding.picoCristalIv.visibility = View.VISIBLE
+                    jobPicoCristal = startNewJob(binding.picoCristalIv)
+                }
+            }
+        }
+        CoroutineScope(Dispatchers.IO).launch {
             while (true){
                 withContext(Dispatchers.Main){
-                    binding.cantCristalTv.text = cristalQty.toString()
+                    //binding.cantCristalTv.text = cristalQtyLiveData.value!!.toString()
                 }
-                cristalChannel.send(cristalQty)
+                cristalChannel.send(cristalQtyLiveData.value!!)
                 delay(2000)
-                if (cristalQty < 3 ) cristalQty++
+                if (cristalQtyLiveData.value!! < 3 ) cristalQtyLiveData.postValue(cristalQtyLiveData.value!! + 1)
             }
         }
         binding.naeCristalIv.setOnClickListener {
-            val naveCristalJob = CoroutineScope(Dispatchers.IO).launch {
+            CoroutineScope(Dispatchers.IO).launch {
                 cristalChannel.receive()
-                if (cristalQty > 0 ) cristalQty--
+                if (cristalQtyLiveData.value!! > 0 ) cristalQtyLiveData.postValue(cristalQtyLiveData.value!! - 1)
                 withContext(Dispatchers.Main){
-                    binding.cantCristalTv.text = cristalQty.toString()
+                    //binding.cantCristalTv.text = cristalQtyLiveData.value!!.toString()
+                    rotateNave(binding.naeCristalIv)
                 }
             }
         }
 
 
         //DEUTERIO
-        val deuterioJob = CoroutineScope(Dispatchers.IO).launch {
-            while (true){
-                withContext(Dispatchers.Main){
-                    binding.cantDeuterioTv.text = deuterioQty.toString()
+        var jobPicoDeuterio = startNewJob(binding.picoDeuterioIv)
+        deuterioQtyLiveData.observe(this){
+            binding.cantDeuterioTv.text = deuterioQtyLiveData.value!!.toString()
+            if (deuterioQtyLiveData.value!! >= 3) {
+                jobPicoDeuterio.cancel()
+                binding.picoDeuterioIv.visibility = View.GONE
+            }else{
+                if (!jobPicoDeuterio.isActive) {
+                    binding.picoDeuterioIv.visibility = View.VISIBLE
+                    jobPicoDeuterio = startNewJob(binding.picoDeuterioIv)
                 }
-                deuterioChannel.send(deuterioQty)
+            }
+        }
+        CoroutineScope(Dispatchers.IO).launch {
+            while (true){
+                /*withContext(Dispatchers.Main){
+                    //binding.cantDeuterioTv.text = deuterioQty.toString()
+                    binding.cantDeuterioTv.text = deuterioQtyLiveData.value!!.toString()
+                }*/
+                //deuterioChannel.send(deuterioQty)
+                deuterioChannel.send(deuterioQtyLiveData.value!!)
                 delay(3000)
-                if (deuterioQty < 3 ) deuterioQty++
+                //if (deuterioQty < 3 ) deuterioQty++
+                if (deuterioQtyLiveData.value!! < 3)
+                    deuterioQtyLiveData.postValue(deuterioQtyLiveData.value!! + 1)
             }
         }
         binding.naveDeuterioIv.setOnClickListener {
-            val naveDeuterioJob = CoroutineScope(Dispatchers.IO).launch {
+            CoroutineScope(Dispatchers.IO).launch {
                 deuterioChannel.receive()
-                if (deuterioQty > 0 ) deuterioQty--
+                //if (deuterioQty > 0 ) deuterioQty--
+                if (deuterioQtyLiveData.value!! > 0)
+                    deuterioQtyLiveData.postValue(deuterioQtyLiveData.value!! - 1)
                 withContext(Dispatchers.Main){
-                    binding.cantDeuterioTv.text = deuterioQty.toString()
+                    //binding.cantDeuterioTv.text = deuterioQty.toString()
+                    binding.cantDeuterioTv.text = deuterioQtyLiveData.value!!.toString()
+                    rotateNave(binding.naveDeuterioIv)
                 }
             }
         }
 
+    }
+
+    private fun startNewJob(picoIv: ImageView): Job {
+        return CoroutineScope(Dispatchers.Main).launch {
+            while (true){
+                picoIv.rotation = 40f
+                delay(200)
+                picoIv.rotation = 0f
+                delay(200)
+            }
+        }
+    }
+
+    private suspend fun rotateNave(naveIv: ImageView) {
+        naveIv.rotation = 90f
+        delay(50)
+        naveIv.rotation = 180f
+        delay(50)
+        naveIv.rotation = 270f
+        delay(50)
+        naveIv.rotation = 360f
     }
 
 }
